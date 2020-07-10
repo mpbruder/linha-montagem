@@ -1,20 +1,77 @@
 # ===========================================================================
+# Variáveis Globais =========================================================
+# ===========================================================================
+
+MUL = 35
+
+# ===========================================================================
 # Funções ===================================================================
 # ===========================================================================
 
 
-def ler_config(arquivo):
+def titulo(texto):
+    '''
+  Função responsável por criar o título do programa.
+    '''
+    print(f'\033[1m\033[1;94m')
+    print(f'==' * MUL)
+    print(f'{texto:^70}')
+    print(f'==' * MUL)
+    print(f'\033[m', end='')
+
+
+def menu():
+    '''
+  Função responsável por criar o menu de opções e validar a escolha do usuário.
+    : return : Retorna a opção do usuário, ou seja, 1 ou 0.
+    '''
+    while True:
+        os.system('cls')
+        titulo('LINHA DE MONTAGEM')
+        print(f'\033[m')
+        print(f'\033[1m1 - Iniciar')
+        print(f'0 - Sair')
+        print(f'\033[1m\033[1;94m--' * MUL)
+        try:
+            opc = int(input('\033[0;0m\033[1m::\033[1;32m '))
+        except ValueError as e:
+            print(f'\n\033[0;0m\033[31m\033[1mERROR: \033[0;0m\033[;1m{e}\nTente novamente...\033[0;0m')
+            time.sleep(1)  # Tempo em segundos
+        else:
+            if opc in [1, 0]:
+                break
+            print(f'\n\033[1m\033[31mOpção inválida!\033[0;0m \033[1mTente novamente...\033[0;0m')
+            time.sleep(1)
+
+    if opc == 1:
+        return True
+    else:
+        print(f'\n\n\033[1;33m\033[1mOK. Até mais! =D\033[0;0m')
+        return False
+
+
+def ler_arquivo():
     '''
   Função que lê as configurações da linha de montagem, custos da entrada/saída, das estações e das transições.
-    : param arquivo: Arquivo de texto que estão as configurações da linha de montagem.
     : return : Uma matriz (lista de listas) com as configurações.
     '''
     m = list()  # Lista
-    file = open(arquivo, 'r')
-    for linha in file:  # Criar lista com todas as linhas preparadas
-        m.append(preparar_linha(linha))
-    file.close()
-    return m
+    while True:
+        titulo('LINHA DE MONTAGEM')
+        arquivo = input(
+            "\nNome do arquivo (default '\033[1;93mconfig.txt\033[0;0m'):\033[1;32m ").strip().lower()
+        print(f'\033[0;0m', end='')
+        try:
+            arq = open(arquivo, 'r')
+        except IOError as e:
+            print(f"\n\033[1m\033[31mERROR: \033[0;0m\033[1mArquivo '\033[33m{arquivo}\033[0;0m\033[1m' não encontrado...\033[0;0m")
+            time.sleep(1)
+            os.system('cls')
+        else:
+            for linha in arq:  # Criar lista com todas as linhas preparadas
+                m.append(preparar_linha(linha))
+            arq.close()
+            return m
 
 
 def preparar_linha(linha):
@@ -31,20 +88,52 @@ def preparar_linha(linha):
 
 def constroi_matriz(lista1, lista2):
     '''
-  Função que cria uma lista com dois itens, que também são listas e possuem o mesmo tamanho.
+  Função que cria uma lista com dois itens, que também são listase  mesmo tamanho.
     : param lista1: Primeira lista
     : param lista2: Segunda lista
-    : return : A matriz (lista de listas).
+    : return : A matriz (tupla de listas).
     '''
     l = list()
     l.append(lista1)
     l.append(lista2)
-    return l
+    return tuple(l)
+
+
+def imprime_montagem(a, t, e, x, num_estacoes):
+    # Definindo matrix para viualizar estacoes
+    TABLE = np.zeros((4, (num_estacoes * 2) + 1), dtype=int)
+
+    # Definindo valores de entrada e saida
+    TABLE[1][0], TABLE[2][0] = e[0], e[1]
+    TABLE[1][-1], TABLE[2][-1] = x[0], x[1]
+
+    # Definindo valores intermediarios
+    for i in range(len(TABLE)):
+        k = p = 0
+        for j in range(1, (num_estacoes * 2)):
+            if j % 2 == 1:
+                TABLE[0][j] = a[0][k]
+                TABLE[3][j] = a[1][k]
+                k += 1
+            elif j % 2 == 0:
+                TABLE[1][j] = t[0][p]
+                TABLE[2][j] = t[1][p]
+                p += 1
+
+    for i in range(len(TABLE)):
+        for j in range((num_estacoes * 2) + 1):
+            if TABLE[i][j] == 0:
+                print('--', end=' ')
+            else:
+                print(f'{TABLE[i][j]}', end=' ')
+        print()
+
+    # print(f'{TABLE}')
 
 
 def fastest_way(a, t, e, x, num_estacoes):
     '''
-  Função que descobre caminho mais rápido entre duas linhas de produção.
+  Função que descobre caminho mais rápido entre duas linhas de montagem.
     : param a: Matriz do custo de cada estação das linhas 0 e 1.
     : param t: Matriz do custo das transferências entre estações (número de estações [n] -1).
     : param e: Tupla do custo de entrada nas linhas 0 e 1.
@@ -64,7 +153,8 @@ def fastest_way(a, t, e, x, num_estacoes):
         # se linha 1 pega a transição de 1 para 0
         trans = t[1][i - 1]
         # resultado é custo da casa atual somado (+) ao minimo entre casa
-        # anterior da linha e casa da linha oposta com custo da transição
+        # anterior da linha e casa anterior da linha oposta com custo da
+        # transição
         resultado = a[0][i] + min(T1[i - 1], T2[i - 1] + trans)
         # grava resultado no vetor de resposta
         T1[i] = resultado
@@ -74,26 +164,32 @@ def fastest_way(a, t, e, x, num_estacoes):
         resultado = a[1][i] + min((T1[i - 1] + trans), T2[i - 1])
         T2[i] = resultado
 
-        # verificar qual o menor contando com o custo de saida
-        menor = min(T1[num_estacoes - 1] + x[0], T2[num_estacoes - 1] + x[1])
-
+    # verificar qual o menor contando com o custo de saida
+    menor = min(T1[num_estacoes - 1] + x[0], T2[num_estacoes - 1] + x[1])
     return menor
 
 
 # ===========================================================================
 # Principal =================================================================
 # ===========================================================================
+import os
+import time
+import sys
 import random
-arquivo = 'config.txt'
-lista = ler_config(arquivo)
-e = tuple(lista[0])  # CUSTO ENTRADA
-a = constroi_matriz(lista[1], lista[4])  # CUSTO CADA ESTACAO
-t = constroi_matriz(lista[2], lista[3])  # CUSTO TRANSFERENCIA ENTRE ESTACAO
-x = tuple(lista[5])  # CUSTO SAIDA
-if 6 <= len(a[0]) <= 10:
-    num_estacoes = len(a[0])
-    result = fastest_way(a, t, e, x, num_estacoes)
-    print(f'{result}')
-else:
-    print(f'O número de estações não respeita o limite! [6 ~ 10]')
-    print(f'Verifique seu arquivo "{arquivo}" e tente novamente...')
+import numpy as np
+
+resp = menu()
+if resp:
+    os.system('cls')
+    lista = ler_arquivo()
+    e = tuple(lista[0])  # CUSTO ENTRADA
+    a = constroi_matriz(lista[1], lista[4])  # CUSTO CADA ESTACAO
+    t = constroi_matriz(lista[2], lista[3])  # CUSTO TRANSFERENCIA
+    x = tuple(lista[5])  # CUSTO SAIDA
+    if 6 <= len(a[0]) <= 10:
+        num_estacoes = len(a[0])
+        result = fastest_way(a, t, e, x, num_estacoes)
+        print(f'{result}')
+        imprime_montagem(a, t, e, x, num_estacoes)
+    else:
+        print(f'\n\033[1m\033[1;31mATENÇÃO:\033[0;0m\033[1m configurações \033[4mnão respeitam\033[0;0m\033[1m o intervalo \033[1m\033[1;31m[6 ~ 10]\033[0;0m \033[1mestações!\033[0;0m')
