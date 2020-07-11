@@ -3,6 +3,7 @@
 # ===========================================================================
 
 MUL = 35
+ROTA = []
 
 # ===========================================================================
 # Funções ===================================================================
@@ -31,9 +32,8 @@ def menu():
         print(f'\033[m')
         print(f'\033[1m1 - Iniciar')
         print(f'0 - Sair')
-        print(f'\033[1m\033[1;94m--' * MUL)
         try:
-            opc = int(input('\033[0;0m\033[1m::\033[1;32m '))
+            opc = int(input('\n::\033[1;32m '))
         except ValueError as e:
             print(f'\n\033[0;0m\033[31m\033[1mERROR: \033[0;0m\033[;1m{e}\nTente novamente...\033[0;0m')
             time.sleep(1)  # Tempo em segundos
@@ -46,7 +46,8 @@ def menu():
     if opc == 1:
         return True
     else:
-        print(f'\n\n\033[1;33m\033[1mOK. Até mais! =D\033[0;0m')
+        print(f'\n\n\033[1;35m\033[1mOK. Até mais! =D\033[0;0m')
+        print('\033[1;34m\033[1m==\033[0;0m' * MUL)
         return False
 
 
@@ -99,7 +100,15 @@ def constroi_matriz(lista1, lista2):
     return tuple(l)
 
 
-def imprime_montagem(a, t, e, x, num_estacoes):
+def cria_tabuleiro(a, t, e, x, num_estacoes):
+    '''
+  Função cria uma matriz (tabuleiro) para implementar visualização da rota mais barata.
+    : param a: Matriz do custo de cada estação das linhas 0 e 1.
+    : param t: Matriz do custo das transferências entre estações (número de estações [n] -1).
+    : param e: Tupla do custo de entrada nas linhas 0 e 1.
+    : param x: Tupla do custo de saída nas linhas 0 e 1.
+    : param num_estacoes: Número de estações
+    '''
     # Definindo matrix para viualizar estacoes
     TABLE = np.zeros((4, (num_estacoes * 2) + 1), dtype=int)
 
@@ -120,15 +129,33 @@ def imprime_montagem(a, t, e, x, num_estacoes):
                 TABLE[2][j] = t[1][p]
                 p += 1
 
+    imprime_montagem(TABLE)
+
+
+def imprime_montagem(TABLE):
+    '''
+    Função responsável por imprimir na tela o tableiro (matriz).
+    '''
+    print('\n')
+    # Imprimindo linhas de montagem na tela
+    print(f'\033[;1m\033[1;93mLINHAS DE MONTAGEM')
+    print(f'\033[1;93m##\033[0;0m' * MUL)
     for i in range(len(TABLE)):
+        time.sleep(0.5)  # Sleep para deixar a animação mais bonita
+        if i == 0 or i == 3:
+            print(f'\033[1;36mLinha Montagem →\033[0;0m  ', end='')
+        else:
+            print(f'  \033[1;90mCustos E/S/T →\033[0;0m ', end='')
         for j in range((num_estacoes * 2) + 1):
             if TABLE[i][j] == 0:
-                print('--', end=' ')
+                print('--', end='')
             else:
-                print(f'{TABLE[i][j]}', end=' ')
+                print(f' {TABLE[i][j]} ', end='')
         print()
-
-    # print(f'{TABLE}')
+        if i == 0 or i == 2:
+            print()  # Dar um espaço a mais para ficar bonito
+    time.sleep(0.5)  # Sleep para deixar a animação mais bonita
+    print(f'\033[;1m\033[1;93m##\033[0;0m' * MUL)
 
 
 def fastest_way(a, t, e, x, num_estacoes):
@@ -141,12 +168,23 @@ def fastest_way(a, t, e, x, num_estacoes):
     : param num_estacoes: Número de estações
     : return : Menor custo entre as linhas de montagem
     '''
+    ROTA = list()
     T1 = [0 for i in range(num_estacoes)]
     T2 = [0 for i in range(num_estacoes)]
 
     # coloca os valores de entrada e primeira casa
     T1[0] = e[0] + a[0][0]  # Entrada linha 0
     T2[0] = e[1] + a[1][0]  # Entrada linha 1
+
+    # Arrumar lista para printar na tela caminho mais barato
+    if T1[0] < T2[0]:
+        ROTA.append(e[0])
+        ROTA.append(a[0][0])
+    else:
+        ROTA.append(e[1])
+        ROTA.append(a[1][0])
+
+    print(f'{ROTA}')
 
     # percorre o vetor colocando os valores de cada casa
     for i in range(1, num_estacoes):
@@ -178,18 +216,34 @@ import sys
 import random
 import numpy as np
 
-resp = menu()
-if resp:
-    os.system('cls')
-    lista = ler_arquivo()
-    e = tuple(lista[0])  # CUSTO ENTRADA
-    a = constroi_matriz(lista[1], lista[4])  # CUSTO CADA ESTACAO
-    t = constroi_matriz(lista[2], lista[3])  # CUSTO TRANSFERENCIA
-    x = tuple(lista[5])  # CUSTO SAIDA
-    if 6 <= len(a[0]) <= 10:
-        num_estacoes = len(a[0])
-        result = fastest_way(a, t, e, x, num_estacoes)
-        print(f'{result}')
-        imprime_montagem(a, t, e, x, num_estacoes)
+while True:
+    resp = menu()
+    if resp:
+        os.system('cls')
+
+        lista = ler_arquivo()
+        e = tuple(lista[0])  # CUSTO ENTRADA
+        a = constroi_matriz(lista[1], lista[4])  # CUSTO CADA ESTACAO
+        t = constroi_matriz(lista[2], lista[3])  # CUSTO TRANSFERENCIA
+        x = tuple(lista[5])  # CUSTO SAIDA
+
+        if ((6 <= len(a[0]) <= 10) and (len(a[0]) == len(a[1])) and (len(t[0]) == len(t[1]))):
+            num_estacoes = len(a[0])
+            cria_tabuleiro(a, t, e, x, num_estacoes)
+            r = fastest_way(a, t, e, x, num_estacoes)
+            print(f'\n\033[;1mMENOR CUSTO = {r} unidades')
+
+            for item in ROTA:
+                print(f'{item} ->', end=' ')
+        else:
+            print(f'\n\033[1m\033[1;31mATENÇÃO:\033[0;0m\033[1m configurações \033[4mnão respeitam\033[0;0m\033[1m o intervalo \033[1m\033[1;31m[6 ~ 10]\033[0;0m \033[1mestações ou estão incorretas.\033[0;0m')
     else:
-        print(f'\n\033[1m\033[1;31mATENÇÃO:\033[0;0m\033[1m configurações \033[4mnão respeitam\033[0;0m\033[1m o intervalo \033[1m\033[1;31m[6 ~ 10]\033[0;0m \033[1mestações!\033[0;0m')
+        break  # sair do programa
+
+    # Verificar se usuário deseja submeter outro arquivo
+    opc = input(
+        '\n\n\n # Voltar ao menu? [\033[1;32mS\033[0;0m\033[;1m/\033[1;31mN\033[0;0m]: ').lower().strip()[0]
+    if opc != 's':
+        print(f'\n\n\033[1;35m\033[1mOK. Até mais! =D\033[0;0m')
+        print('\033[1;34m\033[1m==\033[0;0m' * MUL)
+        break
