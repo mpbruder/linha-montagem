@@ -2,7 +2,7 @@
 # Variáveis Globais =========================================================
 # ===========================================================================
 
-MUL = 35
+MUL = 40
 
 # ===========================================================================
 # Funções ===================================================================
@@ -11,18 +11,19 @@ MUL = 35
 
 def titulo(texto):
     '''
-  Função responsável por criar o título do programa.
+    Função responsável por criar o título do programa.
+    : param texto: texto (string) que deseja alocar no título.
     '''
     print(f'\033[1m\033[1;94m')
     print(f'==' * MUL)
-    print(f'{texto:^70}')
+    print(f'{texto:^80}')
     print(f'==' * MUL)
     print(f'\033[m', end='')
 
 
 def menu():
     '''
-  Função responsável por criar o menu de opções e validar a escolha do usuário.
+    Função responsável por criar o menu de opções e validar a escolha do usuário.
     : return : Retorna a opção do usuário, ou seja, 1 ou 0.
     '''
     while True:
@@ -52,7 +53,7 @@ def menu():
 
 def ler_arquivo():
     '''
-  Função que lê as configurações da linha de montagem, custos da entrada/saída, das estações e das transições.
+    Função que lê as configurações da linha de montagem, custos da entrada/saída, das estações e das transições.
     : return : Uma matriz (lista de listas) com as configurações.
     '''
     m = list()  # Lista
@@ -76,7 +77,7 @@ def ler_arquivo():
 
 def preparar_linha(linha):
     '''
-  Função que perara cada linha do arquivo lido para que possa ser usado durante a execução do programa.
+    Função que perara cada linha do arquivo lido para que possa ser usado durante a execução do programa.
     : param linha: Linha que foi lida do arquivo de texto.
     : return : Uma lista com todos os números lidos na linha do arquivo de texto.
     '''
@@ -88,7 +89,7 @@ def preparar_linha(linha):
 
 def constroi_matriz(lista1, lista2):
     '''
-  Função que cria uma lista com dois itens, que também são listase  mesmo tamanho.
+    Função que cria uma lista com dois itens, que também são listase  mesmo tamanho.
     : param lista1: Primeira lista
     : param lista2: Segunda lista
     : return : A matriz (tupla de listas).
@@ -101,7 +102,7 @@ def constroi_matriz(lista1, lista2):
 
 def cria_tabuleiro(a, t, e, x, num_estacoes):
     '''
-  Função cria uma matriz (tabuleiro) para implementar visualização da rota mais barata.
+    Função cria uma matriz (tabuleiro) para implementar visualização da rota mais barata.
     : param a: Matriz do custo de cada estação das linhas 0 e 1.
     : param t: Matriz do custo das transferências entre estações (número de estações [n] -1).
     : param e: Tupla do custo de entrada nas linhas 0 e 1.
@@ -134,38 +135,45 @@ def cria_tabuleiro(a, t, e, x, num_estacoes):
 def imprime_montagem(TABLE):
     '''
     Função responsável por imprimir na tela o tableiro (matriz).
+    : param TABLE: Uma matriz (numpy zeros) em que os custos da linha de montagem e transf. estao alocados.
     '''
     print('\n')
     # Imprimindo linhas de montagem na tela
-    print(f'\033[;1m\033[1;93mLINHAS DE MONTAGEM')
-    print(f'\033[1;93m##\033[0;0m' * MUL)
+    arq_saida.write('@ LINHAS DE MONTAGEM\n')
+    arq_saida.write('--' * MUL)
+    arq_saida.write('\n')
+    print(f'\033[;1m@ LINHAS DE MONTAGEM')
+    print(f'\033[1m--\033[0;0m' * MUL)
+    cont = 1
     for i in range(len(TABLE)):
         time.sleep(0.5)  # Sleep para deixar a animação mais bonita
         if i == 0 or i == 3:
-            arq_saida.write("\n"+'Linha Montagem')
-            print(f'\033[1;36mLinha Montagem →\033[0;0m  ', end='')
+            arq_saida.write('Linha Montagem -> ')
+            print(f'\033[1;36mLinha Montagem [{cont}] →\033[0;0m  ', end='')
+            cont += 1
         else:
-            print(f'  \033[1;90mCustos E/S/T →\033[0;0m ', end='')
-            arq_saida.write("\n"+f' Custos E/S/T  ')
+            arq_saida.write('  Custos E/S/T -> ')
+            print(f'      \033[1;90mCustos E/S/T →\033[0;0m ', end='')
 
         for j in range((num_estacoes * 2) + 1):
             if TABLE[i][j] == 0:
-                print('--', end='')
                 arq_saida.write('--')
+                print('--', end='')
             else:
-                print(f' {TABLE[i][j]} ', end='')
                 arq_saida.write(f' {TABLE[i][j]} ')
+                print(f' {TABLE[i][j]} ', end='')
+        arq_saida.write('\n')
         print()
         if i == 0 or i == 2:
             print()  # Dar um espaço a mais para ficar bonito
     time.sleep(0.5)  # Sleep para deixar a animação mais bonita
-    print(f'\033[;1m\033[1;93m##\033[0;0m' * MUL)
-    arq_saida.write("\n"+f'##' * MUL)
+    print(f'\033[;1m--\033[0;0m' * MUL)
+    arq_saida.write('--' * MUL)
 
 
 def fastest_way(a, t, e, x, num_estacoes):
     '''
-  Função que descobre caminho mais rápido entre duas linhas de montagem.
+    Função que descobre caminho mais rápido entre duas linhas de montagem.
     : param a: Matriz do custo de cada estação das linhas 0 e 1.
     : param t: Matriz do custo das transferências entre estações (número de estações [n] -1).
     : param e: Tupla do custo de entrada nas linhas 0 e 1.
@@ -174,6 +182,9 @@ def fastest_way(a, t, e, x, num_estacoes):
     : return : Menor custo entre as linhas de montagem
     '''
 
+    # Funcao para criar tabuleiro que sera printado no arq. e na tela.
+    cria_tabuleiro(a, t, e, x, num_estacoes)
+
     T1 = [0 for i in range(num_estacoes)]
     T2 = [0 for i in range(num_estacoes)]
 
@@ -181,17 +192,6 @@ def fastest_way(a, t, e, x, num_estacoes):
     T1[0] = e[0] + a[0][0]  # Entrada linha 0
     T2[0] = e[1] + a[1][0]  # Entrada linha 1
 
-    # Arrumar lista para printar na tela caminho mais barato
-    '''
-    if T1[0] < T2[0]:
-        ROTA.append(e[0])
-        ROTA.append(a[0][0])
-    else:
-        ROTA.append(e[1])
-        ROTA.append(a[1][0])
-    print("rota aquii")
-    print(f'{ROTA}')
-    '''
     # percorre o vetor colocando os valores de cada casa
     for i in range(1, num_estacoes):
         # se linha 1 pega a transição de 1 para 0
@@ -206,9 +206,9 @@ def fastest_way(a, t, e, x, num_estacoes):
         else:
             resultado = custo + T2[i - 1] + trans
             R1[i - 1] = 2
-
         # grava resultado no vetor de resposta
         T1[i] = resultado
+
         # se linha 0 pega a transição de 0 para 1
         trans = t[0][i - 1]
         custo = a[1][i]
@@ -223,61 +223,87 @@ def fastest_way(a, t, e, x, num_estacoes):
     # verificar qual o menor contando com o custo de saida
     if T1[num_estacoes - 1] + x[0] <= T2[num_estacoes - 1] + x[1]:
         tamanho = T1[num_estacoes - 1] + x[0]
-        #print("tam1=" + str(tamanho))
+        # print("tam1=" + str(tamanho))
         menor = 1
     else:
         tamanho = T2[num_estacoes - 1] + x[1]
-        #print("tam2=" + str(tamanho))
+        # print("tam2=" + str(tamanho))
         menor = 2
 
-    return tamanho,menor
+    return tamanho, menor
+
 
 def imprimir_estacao(menor, estacoes):
+    '''
+    Função que
+    : param menor:
+    : param estacoes:
+    : return :
+    '''
 
-    #cria o vetor com o melhor caminho
+    print(f'\n\n\033[1m@ MELHOR CAMINHO')
+    print(f'--' * 20)
+    arq_saida.write("\n\n" + '@ MELHOR CAMINHO\n')
+    arq_saida.write(f'--' * 20)
+
+    # cria o vetor com o melhor caminho
     linha = menor
-    proxlinha = 0
+    prox_linha = 0
     caminho = list()
-    resultado = []
-    #utiliza o vetor de resultados para saber qual o menor caminho entre as casas
-    #refaz o caminho do fim ao começo escolhendo as menores distâncias
+    resultado = list()
+    # utiliza o vetor de resultados para saber qual o menor caminho entre as casas
+    # refaz o caminho do fim ao começo escolhendo as menores distâncias
     for i in range(estacoes, 0, -1):
-        #na primeira iteração vai simplesmente salvar 1 ou 2
-        #verifica sempre qual a próxima linha a ser visitada para pegar as informações
+        # na primeira iteração vai simplesmente salvar 1 ou 2
+        # verifica sempre qual a próxima linha a ser visitada para pegar as
+        # informações
         if menor == 1 and i == estacoes:
             linha = 1
-            proxlinha = R1[i - 2]
+            prox_linha = R1[i - 2]
         elif menor == 2 and i == estacoes:
             linha = 2
-            proxlinha = R2[i - 2]
-        elif proxlinha == 1 and i != estacoes:
-            linha = proxlinha
-            proxlinha = R1[i - 2]
-        elif proxlinha == 2 and i != estacoes:
-            linha = proxlinha
-            proxlinha = R2[i - 2]
+            prox_linha = R2[i - 2]
+        elif prox_linha == 1 and i != estacoes:
+            linha = prox_linha
+            prox_linha = R1[i - 2]
+        elif prox_linha == 2 and i != estacoes:
+            linha = prox_linha
+            prox_linha = R2[i - 2]
         else:
-            #caso de errado algo imprime 0 como um erro
+            # caso de errado algo imprime 0 como um erro
             linha = 0
-            proxlinha = 0
+            prox_linha = 0
             return 0
         resultado.append(linha)
-        #constroi um vetor com o resultado e uma lista para imprimir
-        caminho.append("estação {}, linha {}".format(i, linha))
+        # constroi um vetor com o resultado e uma lista para imprimir
+        caminho.append([i, linha])
+        # caminho.append(f"estação {i}, linha {linha}")
 
-    #inverte a lista
+    # inverte a lista
     caminho.reverse()
-    for item in caminho:
-        print(item)
-        arq_saida.write("\n"+item)
-    #printa a linha e estação do melhor caminho
-   #inverte o vetor, já que ele foi montado do fim ao começo
+
+    # printa a linha e estação do melhor caminho
+    time.sleep(0.5)
+    for idx, item in enumerate(caminho):
+        if idx == 0:
+            # printar entrada
+            print(f'\033[0m\033[1;35mEntrada     → Linha {item[1]}\033[0m')
+            arq_saida.write(f'\nEntrada     -> Linha {str(item[1])}')
+        elif idx == len(caminho) - 1:
+            # printar saida
+            print(f'\033[1;35mSaída       → Linha {item[1]}\033[0m')
+            arq_saida.write(f'\nSaída       -> Linha {str(item[1])}\n')
+        else:
+            # printar restante das estações
+            print(f'Estação [{item[0]}] → Linha {item[1]}')
+            arq_saida.write(
+                "\n" + "Estação [" + str(item[1]) + "] -> Linha " + str(item[1]))
+        time.sleep(0.5)
+    print(f'\033[1m--\033[0m' * 20, end='')
+    arq_saida.write(f'--' * 20)
+
+    # inverte o vetor, já que ele foi montado do fim ao começo
     return (resultado[::-1])
-
-
-
-# Programa Principal ========================================================
-import random
 
 
 # ===========================================================================
@@ -300,7 +326,7 @@ while True:
         t = constroi_matriz(lista[2], lista[3])  # CUSTO TRANSFERENCIA
         x = tuple(lista[5])  # CUSTO SAIDA
 
-        arq_saida=open("saida.txt","w")
+        arq_saida = open("saida.txt", "w")
 
         if ((6 <= len(a[0]) <= 10) and (len(a[0]) == len(a[1])) and (len(t[0]) == len(t[1]))):
             num_estacoes = len(a[0])
@@ -308,19 +334,16 @@ while True:
             R1 = [0 for i in range(num_estacoes - 1)]
             R2 = [0 for i in range(num_estacoes - 1)]
 
-            cria_tabuleiro(a, t, e, x, num_estacoes)
-            r = fastest_way(a, t, e, x, num_estacoes)
-            print(f'\n\033[;1mMENOR CUSTO = {r[0]} unidades')
-            arq_saida.write("\n"+f'MENOR CUSTO = {r[0]} unidades')
+            # chama a função que descobre o melhor caminho
+            res = fastest_way(a, t, e, x, num_estacoes)
+            # chama a função que printa o melhor caminho
+            caminho_final = imprimir_estacao(res[1], num_estacoes)
 
+            # print(f'\n\033[;1mCAMINHO ÓTIMO = {caminho_final}', end="")
+            arq_saida.write("\nCAMINHO OTIMO = " + str(caminho_final))
 
-            print(f'\n\033[;1mMELHOR CAMINHO ')
-            arq_saida.write("\n"+'MELHOR CAMINHO ')
-            #chama a função que printa o melhor caminho
-            caminho_final=imprimir_estacao(r[1], num_estacoes)
-            print(f'\n\033[;1mCaminho Ótimo =',end="")
-            print(caminho_final)
-            arq_saida.write("\n"+str(caminho_final))
+            print(f'\n\033[1m\033[1;32mCUSTO = {res[0]} unidades\033[0m')
+            arq_saida.write("\n" + f'MENOR CUSTO = {res[0]} unidades')
 
         else:
             print(f'\n\033[1m\033[1;31mATENÇÃO:\033[0;0m\033[1m configurações \033[4mnão respeitam\033[0;0m\033[1m o intervalo \033[1m\033[1;31m[6 ~ 10]\033[0;0m \033[1mestações ou estão incorretas.\033[0;0m')
@@ -328,10 +351,9 @@ while True:
         break  # sair do programa
 
     # Verificar se usuário deseja submeter outro arquivo
-
     opc = input(
         '\n\n\n # Voltar ao menu? [\033[1;32mS\033[0;0m\033[;1m/\033[1;31mN\033[0;0m]: ').lower().strip()[0]
     if opc != 's':
-        print(f'\n\n\033[1;35m\033[1mOK. Até mais! =D\033[0;0m')
+        print(f'\n\n\033[1;35m\033[1m\nOK. Verifique o arquivo "saida.txt"\n\nAté mais! =D\033[0;0m')
         print('\033[1;34m\033[1m==\033[0;0m' * MUL)
         break
